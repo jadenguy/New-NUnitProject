@@ -1,39 +1,44 @@
 param (
     $root = $(Get-Item .),
-    $project = "newProject",
+    $solution = "newProject",
     $class = "newClass",
     $con = "consoleClass",
-    [switch] $NoConsole
+    [switch] $MakeConsole
 )
 
 $test = "$class.Test"
 
-$projectDir = Join-Path $root $project
-$classDir = Join-Path $projectDir $class
-$testDir = Join-Path $projectDir $test
-$conDir = Join-Path $projectDir $con
+$solutionDir = Join-Path $root $solution
+$classDir = Join-Path $solutionDir $class
+$testDir = Join-Path $solutionDir $test
+$conDir = Join-Path $solutionDir $con
 
-Write-Verbose "Creating new Project $project at $projectDir"
+Write-Verbose "Creating new Project $solution at $solutionDir"
 
-dotnet new sln  -n $project -o $projectDir
-$projectSln = Join-Path $projectDir "$project.sln"
+dotnet new sln  -n $solution -o $solutionDir
+$Sln = Join-Path $solutionDir "$solution.sln"
 
 Write-Verbose "Creating new Class Library $class at $classDir"
 
 dotnet new classlib -n $class -o $classDir
 $classLib = Join-Path $classDir "$class.csproj"
-dotnet sln $projectSln add $classLib
+dotnet sln $Sln add $classLib
+
+Write-Verbose "Creating new NUnit Test $test at $testDir"
 
 dotnet new nunit -n $test -o $testDir
 $nUnit = Join-Path $testDir "$class.Test.csproj"
 dotnet add $nUnit reference  $classLib
-dotnet sln $projectSln add $nUnit
+dotnet sln $Sln add $nUnit
 
-if (-not $NoConsole) {
+if ($MakeConsole) {
+
+    Write-Verbose "Creating new Console Class $con at $conTest"
+
     dotnet new console -n $con -o $conDir
     $conClass = Join-Path $conDir "$con.csproj"
     dotnet add $conClass reference $classLib
-    dotnet sln $projectSln add $conClass
+    dotnet sln $Sln add $conClass
 }
 
-code $projectDir
+code $solutionDir

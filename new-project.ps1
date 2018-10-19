@@ -1,8 +1,12 @@
-$root = Get-Item .
-$project = "newProject"
-$class = "newClass"
+param (
+    $root = $(Get-Item .),
+    $project = "newProject",
+    $class = "newClass",
+    $con = "consoleClass",
+    [switch] $NoConsole
+)
+
 $test = "$class.Test"
-$con = "consoleClass"
 
 $projectDir = Join-Path $root $project
 $classDir = Join-Path $projectDir $class
@@ -25,9 +29,11 @@ $nUnit = Join-Path $testDir "$class.Test.csproj"
 dotnet add $nUnit reference  $classLib
 dotnet sln $projectSln add $nUnit
 
-dotnet new console -n $con -o $conDir
-$conClass = Join-Path $conDir "$con.csproj"
-dotnet add $conClass reference $classLib
-dotnet sln $projectSln add $conClass
+if (-not $NoConsole) {
+    dotnet new console -n $con -o $conDir
+    $conClass = Join-Path $conDir "$con.csproj"
+    dotnet add $conClass reference $classLib
+    dotnet sln $projectSln add $conClass
+}
 
 code $projectDir

@@ -3,7 +3,8 @@ param (
     $solution = "newProject",
     $class = "newClass",
     $con = "consoleClass",
-    [switch] $MakeConsole
+    [switch] $MakeConsole,
+    [switch] $NoGit
 )
 
 $test = "$class.Test"
@@ -39,6 +40,19 @@ if ($MakeConsole) {
     $conClass = Join-Path $conDir "$con.csproj"
     dotnet add $conClass reference $classLib
     dotnet sln $Sln add $conClass
+}
+
+if (!$NoGit) {
+    $gitIgnore = Join-Path $PSScriptRoot "gitignore"
+    $gitIgnoreDestination = Join-Path $solutionDir ".gitignore"
+
+    Write-Verbose "Initing Git of $solutionDir"
+
+    Copy-Item -path $gitIgnore -Destination $gitIgnoreDestination 
+    git init $solutionDir
+    git -C $solutionDir add .
+    git -C $solutionDir commit --all -m "Initial Commit"
+    git -C $solutionDir log
 }
 
 code $solutionDir

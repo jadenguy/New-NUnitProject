@@ -1,4 +1,5 @@
 # New-NUnitProject
+
 Powershell Script to stand up basic NUnit tested Class Library project and init the Git
 
 ## Usage
@@ -27,6 +28,14 @@ Run this script in the directory you want to create the solution folder in, or d
 
 * Switch that is turned off by default
 * Will default $Console to "consClass"
+
+### "-NoGit" prevents the creation of a Git repository
+
+* Just in case
+
+### "-Verbose" prints the output of the commands
+
+* Just in case
 
 ## TODO
 

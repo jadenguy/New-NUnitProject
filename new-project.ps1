@@ -1,4 +1,50 @@
+<#
+.SYNOPSIS
+    Stands up basic NUnit tested Class Library project and init the Git
+.DESCRIPTION
+    Creates a Git repository of a .Net Solution with a Class Library that is refered to by an NUnit Test Class library. Optionally creates a console class.
+.EXAMPLE
+    PS C:\> <example usage>
+    Explanation of what the example does
+
+.PARAMETER Path
+    The destination path for your solution
+    Defaults to the working directory
+
+.PARAMETER Solution
+    The Solution name
+    Creates a solution with that name provided by this parameter
+
+.PARAMETER Class
+    The .Net Standard Class Library name
+    Creates a Class Library with the name provided by this parameter
+
+.PARAMETER MakeConsole
+    Creates Console Application Class project
+    Default $Console to "consClass" if none is provided without -Console
+
+.PARAMETER Console
+    The Console Class name. Will casue creation of Console Application Class project
+    This causes -MakeConsole to be true
+
+.PARAMETER NoGit
+    Doesn't create a git repository of the solution
+
+.INPUTS
+    No inputs
+
+.OUTPUTS
+    No outputs
+
+.NOTES
+    No notes
+
+.LINK
+    https://github.com/jadenguy/New-NUnitProject
+#>
+
 param (
+    [switch]$verbose,
     $path = $(Get-Item .),
     $solution = "newSolution",
     $class = "newClass",
@@ -7,53 +53,62 @@ param (
     [switch] $NoGit
 )
 
-$test = "$class.Test"
+function Invoke-Creation {
+    $test = "$class.Test"
 
-$solutionDir = Join-Path $path $solution
-$classDir = Join-Path $solutionDir $class
-$testDir = Join-Path $solutionDir $test
-$consoleDir = Join-Path $solutionDir $console
+    $solutionDir = Join-Path $path $solution
+    $classDir = Join-Path $solutionDir $class
+    $testDir = Join-Path $solutionDir $test
+    $consoleDir = Join-Path $solutionDir $console
 
-Write-Verbose "Creating new Project $solution at $solutionDir"
+    Write-Output "Creating new Project $solution at $solutionDir"
 
-dotnet new sln  -n $solution -o $solutionDir
-$Sln = Join-Path $solutionDir "$solution.sln"
+    dotnet new sln  -n $solution -o $solutionDir
+    $Sln = Join-Path $solutionDir "$solution.sln"
 
-Write-Verbose "Creating new Class Library $class at $classDir"
+    Write-Output "Creating new Class Library $class at $classDir"
 
-dotnet new classlib -n $class -o $classDir
-$classLib = Join-Path $classDir "$class.csproj"
-dotnet sln $Sln add $classLib
+    dotnet new classlib -n $class -o $classDir
+    $classLib = Join-Path $classDir "$class.csproj"
+    dotnet sln $Sln add $classLib
 
-Write-Verbose "Creating new NUnit Test $test at $testDir"
+    Write-Output "Creating new NUnit Test $test at $testDir"
 
-dotnet new nunit -n $test -o $testDir
-$nUnit = Join-Path $testDir "$class.Test.csproj"
-dotnet add $nUnit reference  $classLib
-dotnet sln $Sln add $nUnit
-if ($MakeConsole -and -not $console)
-{$console = "conClass"}
-if ( $console ) {
+    dotnet new nunit -n $test -o $testDir
+    $nUnit = Join-Path $testDir "$class.Test.csproj"
+    dotnet add $nUnit reference  $classLib
+    dotnet sln $Sln add $nUnit
+    if ($MakeConsole -and -not $console) {
+        $console = "conClass"
+    }
+    if ( $console ) {
+        Write-Output "Creating new Console Class $console at $consoleTest"
 
-    Write-Verbose "Creating new Console Class $console at $consoleTest"
+        dotnet new console -n $console -o $consoleDir
+        $consoleClass = Join-Path $consoleDir "$console.csproj"
+        dotnet add $consoleClass reference $classLib
+        dotnet sln $Sln add $consoleClass
+    }
 
-    dotnet new console -n $console -o $consoleDir
-    $consoleClass = Join-Path $consoleDir "$console.csproj"
-    dotnet add $consoleClass reference $classLib
-    dotnet sln $Sln add $consoleClass
+    if (!$NoGit) {
+        $gitIgnore = Join-Path $PSScriptRoot "gitignore"
+        $gitIgnoreDestination = Join-Path $solutionDir ".gitignore"
+
+        Write-Output "Initing Git of $solutionDir"
+
+        Copy-Item -path $gitIgnore -Destination $gitIgnoreDestination 
+        git init $solutionDir
+        git -C $solutionDir add .
+        git -C $solutionDir commit --all -m "Initial Commit"
+        git -C $solutionDir log
+    }
+
+    code $solutionDir
 }
 
-if (!$NoGit) {
-    $gitIgnore = Join-Path $PSScriptRoot "gitignore"
-    $gitIgnoreDestination = Join-Path $solutionDir ".gitignore"
-
-    Write-Verbose "Initing Git of $solutionDir"
-
-    Copy-Item -path $gitIgnore -Destination $gitIgnoreDestination 
-    git init $solutionDir
-    git -C $solutionDir add .
-    git -C $solutionDir commit --all -m "Initial Commit"
-    git -C $solutionDir log
+if ($verbose) {
+    $oldverbose = $VerbosePreference
+    $VerbosePreference = "continue" 
 }
-
-code $solutionDir
+Invoke-Creation | Write-Verbose
+$VerbosePreference = $oldverbose

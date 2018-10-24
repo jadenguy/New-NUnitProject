@@ -1,18 +1,18 @@
 param (
-    $root = $(Get-Item .),
-    $solution = "newProject",
+    $path = $(Get-Item .),
+    $solution = "newSolution",
     $class = "newClass",
-    $con = "consoleClass",
     [switch] $MakeConsole,
+    [string]$console,
     [switch] $NoGit
 )
 
 $test = "$class.Test"
 
-$solutionDir = Join-Path $root $solution
+$solutionDir = Join-Path $path $solution
 $classDir = Join-Path $solutionDir $class
 $testDir = Join-Path $solutionDir $test
-$conDir = Join-Path $solutionDir $con
+$consoleDir = Join-Path $solutionDir $console
 
 Write-Verbose "Creating new Project $solution at $solutionDir"
 
@@ -31,15 +31,16 @@ dotnet new nunit -n $test -o $testDir
 $nUnit = Join-Path $testDir "$class.Test.csproj"
 dotnet add $nUnit reference  $classLib
 dotnet sln $Sln add $nUnit
+if ($MakeConsole -and -not $console)
+{$console = "conClass"}
+if ( $console ) {
 
-if ($MakeConsole) {
+    Write-Verbose "Creating new Console Class $console at $consoleTest"
 
-    Write-Verbose "Creating new Console Class $con at $conTest"
-
-    dotnet new console -n $con -o $conDir
-    $conClass = Join-Path $conDir "$con.csproj"
-    dotnet add $conClass reference $classLib
-    dotnet sln $Sln add $conClass
+    dotnet new console -n $console -o $consoleDir
+    $consoleClass = Join-Path $consoleDir "$console.csproj"
+    dotnet add $consoleClass reference $classLib
+    dotnet sln $Sln add $consoleClass
 }
 
 if (!$NoGit) {

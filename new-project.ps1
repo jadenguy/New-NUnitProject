@@ -54,36 +54,32 @@ param (
 )
 
 function Invoke-Creation {
-    $test = "$class.Test"
-
-    $solutionDir = Join-Path $path $solution
-    $classDir = Join-Path $solutionDir $class
-    $testDir = Join-Path $solutionDir $test
-    $consoleDir = Join-Path $solutionDir $console
 
     Write-Output "Creating new Project $solution at $solutionDir"
-
+    $solutionDir = Join-Path $path $solution
     dotnet new sln  -n $solution -o $solutionDir
     $Sln = Join-Path $solutionDir "$solution.sln"
 
     Write-Output "Creating new Class Library $class at $classDir"
-
+    $classDir = Join-Path $solutionDir $class
     dotnet new classlib -n $class -o $classDir
     $classLib = Join-Path $classDir "$class.csproj"
     dotnet sln $Sln add $classLib
 
     Write-Output "Creating new NUnit Test $test at $testDir"
-
+    $test = "$class.Test"
+    $testDir = Join-Path $solutionDir $test
     dotnet new nunit -n $test -o $testDir
     $nUnit = Join-Path $testDir "$class.Test.csproj"
     dotnet add $nUnit reference  $classLib
     dotnet sln $Sln add $nUnit
+
     if ($MakeConsole -and -not $console) {
         $console = "conClass"
     }
     if ( $console ) {
         Write-Output "Creating new Console Class $console at $consoleTest"
-
+        $consoleDir = Join-Path $solutionDir $console
         dotnet new console -n $console -o $consoleDir
         $consoleClass = Join-Path $consoleDir "$console.csproj"
         dotnet add $consoleClass reference $classLib
@@ -91,11 +87,9 @@ function Invoke-Creation {
     }
 
     if (!$NoGit) {
+        Write-Output "Initing Git of $solutionDir"
         $gitIgnore = Join-Path $PSScriptRoot "gitignore"
         $gitIgnoreDestination = Join-Path $solutionDir ".gitignore"
-
-        Write-Output "Initing Git of $solutionDir"
-
         Copy-Item -path $gitIgnore -Destination $gitIgnoreDestination 
         git init $solutionDir
         git -C $solutionDir add .
@@ -107,8 +101,8 @@ function Invoke-Creation {
 }
 
 if ($verbose) {
-    $oldverbose = $VerbosePreference
-    $VerbosePreference = "continue" 
+    Invoke-Creation 
 }
-Invoke-Creation | Write-Verbose
-$VerbosePreference = $oldverbose
+else {
+    Invoke-Creation | Out-Null
+}

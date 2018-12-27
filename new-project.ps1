@@ -54,7 +54,14 @@ param (
 )
 
 function Invoke-Creation {
-
+    param(
+        $path,
+        $solution,
+        $class,
+        $MakeConsole,
+        $console,
+        $NoGit
+    )
     Write-Output "Creating new Project $solution at $solutionDir"
     $solutionDir = Join-Path $path $solution
     dotnet new sln  -n $solution -o $solutionDir
@@ -99,10 +106,15 @@ function Invoke-Creation {
 
     code $solutionDir
 }
-
+$arguments = @{ path = $path
+    solution = $solution 
+    class = $class 
+    MakeConsole = $MakeConsole
+    console = $console
+    NoGit = $NoGit}
 if ($verbose) {
-    Invoke-Creation 
+    Invoke-Creation @arguments
 }
 else {
-    Invoke-Creation | Out-Null
+    Invoke-Creation @arguments | Out-Null
 }

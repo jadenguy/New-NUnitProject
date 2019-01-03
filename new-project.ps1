@@ -3,6 +3,8 @@
     Stands up basic NUnit tested Class Library project and init the Git
 .DESCRIPTION
     Creates a Git repository of a .Net Solution with a Class Library that is refered to by an NUnit Test Class library. Optionally creates a console class.
+    See below for project layout format
+    https://gist.github.com/davidfowl/ed7564297c61fe9ab814
 .EXAMPLE
     PS C:\> <example usage>
     Explanation of what the example does
@@ -62,20 +64,26 @@ function Invoke-Creation {
         $console,
         $NoGit
     )
+    
+    New-Item -ItemType Directory -path (Join-Path $path "src") -Force
+    
     Write-Output "Creating new Project $solution at $solutionDir"
     $solutionDir = Join-Path $path $solution
     dotnet new sln  -n $solution -o $solutionDir
     $Sln = Join-Path $solutionDir "$solution.sln"
 
     Write-Output "Creating new Class Library $class at $classDir"
-    $classDir = Join-Path $solutionDir $class
+    $classDir = Join-Path $solutionDir "src\$class"
     dotnet new classlib -n $class -o $classDir
     $classLib = Join-Path $classDir "$class.csproj"
     dotnet sln $Sln add $classLib
 
     Write-Output "Creating new NUnit Test $test at $testDir"
+
+    New-Item -ItemType Directory -path (Join-Path $path "tests") -Force
+
     $test = "$class.Test"
-    $testDir = Join-Path $solutionDir $test
+    $testDir = Join-Path $solutionDir "tests\$test"
     dotnet new nunit -n $test -o $testDir
     $nUnit = Join-Path $testDir "$class.Test.csproj"
     dotnet add $nUnit reference  $classLib
@@ -86,7 +94,7 @@ function Invoke-Creation {
     }
     if ( $console ) {
         Write-Output "Creating new Console Class $console at $consoleTest"
-        $consoleDir = Join-Path $solutionDir $console
+        $consoleDir = Join-Path $solutionDir "src\$console"
         dotnet new console -n $console -o $consoleDir
         $consoleClass = Join-Path $consoleDir "$console.csproj"
         dotnet add $consoleClass reference $classLib

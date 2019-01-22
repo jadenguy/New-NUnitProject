@@ -46,12 +46,12 @@
 #>
 
 param (
-    [switch]$verbose,
-    $path = $(Get-Item .),
-    $solution = "newSolution",
-    $class = "newClass",
+    [switch]$Verbose,
+    $Path = $(Get-Item .),
+    $Solution = "newSolution",
+    $Class = "newClass",
     [switch] $MakeConsole,
-    [string]$console,
+    [string]$Console,
     [switch] $NoGit
 )
 
@@ -63,27 +63,29 @@ function Invoke-Creation {
         $MakeConsole,
         $console,
         $NoGit
-    )
-    
-    New-Item -ItemType Directory -path (Join-Path $path "src") -Force
+    )    
     
     Write-Output "Creating new Project $solution at $solutionDir"
     $solutionDir = Join-Path $path $solution
     dotnet new sln  -n $solution -o $solutionDir
     $Sln = Join-Path $solutionDir "$solution.sln"
 
+    $srcDir = Join-Path $solutionDir "src"
+    New-Item -ItemType Directory -path $srcDir -Force
+
+    $classDir = Join-Path $srcDir $class
     Write-Output "Creating new Class Library $class at $classDir"
-    $classDir = Join-Path $solutionDir "src\$class"
     dotnet new classlib -n $class -o $classDir
     $classLib = Join-Path $classDir "$class.csproj"
     dotnet sln $Sln add $classLib
 
-    Write-Output "Creating new NUnit Test $test at $testDir"
-
-    New-Item -ItemType Directory -path (Join-Path $path "tests") -Force
+ 
+    $testsDir = Join-Path $solutionDir "tests"
+    New-Item -ItemType Directory -path $testsDir -Force
 
     $test = "$class.Test"
-    $testDir = Join-Path $solutionDir "tests\$test"
+    $testDir = Join-Path $testsdir $test
+    Write-Output "Creating new NUnit Test $test at $testDir"
     dotnet new nunit -n $test -o $testDir
     $nUnit = Join-Path $testDir "$class.Test.csproj"
     dotnet add $nUnit reference  $classLib
@@ -94,7 +96,7 @@ function Invoke-Creation {
     }
     if ( $console ) {
         Write-Output "Creating new Console Class $console at $consoleTest"
-        $consoleDir = Join-Path $solutionDir "src\$console"
+        $consoleDir = Join-Path $srcDir $console
         dotnet new console -n $console -o $consoleDir
         $consoleClass = Join-Path $consoleDir "$console.csproj"
         dotnet add $consoleClass reference $classLib

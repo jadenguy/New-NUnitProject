@@ -49,7 +49,7 @@ param (
     [switch]$Verbose,
     $Path = $(Get-Item .),
     $Solution = "newSolution",
-    $Class = "newClass",
+    $Class = "Common",
     [switch] $MakeConsole,
     [string]$Console,
     [switch] $NoGit
@@ -92,7 +92,7 @@ function Invoke-Creation {
     dotnet sln $Sln add $nUnit
 
     if ($MakeConsole -and -not $console) {
-        $console = "conClass"
+        $console = "App"
     }
     if ( $console ) {
         Write-Output "Creating new Console Class $console at $consoleTest"

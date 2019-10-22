@@ -54,8 +54,21 @@ param (
     $Class = "Common",
     [switch] $MakeConsole,
     [string]$Console,
-    [switch] $NoGit
+    [switch] $NoGit,
+    [switch] $DontUpdateGitIgnore,
+    [string] $UpdateGitIgnoreUrl = "https://raw.githubusercontent.com/github/gitignore/master/VisualStudio.gitignore"
 )
+function Update-GitIgnore($UpdateGitIgnoreUrl) {
+    
+    $gi = Invoke-WebRequest "https://raw.githubusercontent.com/github/gitignore/master/VisualStudio.gitignore"
+    $gic = $gi.Content.Split("`n")
+    $od = join-path $PSScriptRoot "gitignore"
+    $odc = Get-Content $od 
+    $delta = Compare-Object $odc $gic
+    Write-Output ($delta | Out-String)
+    Write-Output "$(($delta |Measure-Object).Count) line changes", ""
+    Set-Content -Path $od -Value $gic
+}
 
 function Invoke-Creation {
     param(
@@ -64,7 +77,9 @@ function Invoke-Creation {
         $class,
         $MakeConsole,
         $console,
-        $NoGit
+        $NoGit,
+        $DontUpdateGitIgnore,
+        $UpdateGitIgnoreUrl
     )    
     
     Write-Output "Creating new Project $solution at $solutionDir"
@@ -78,6 +93,7 @@ function Invoke-Creation {
     $classDir = Join-Path $srcDir $class
     Write-Output "Creating new Class Library $class at $classDir"
     dotnet new classlib -n $class -o $classDir
+    
     $classLib = Join-Path $classDir "$class.csproj"
     dotnet sln $Sln add $classLib
 
@@ -106,6 +122,7 @@ function Invoke-Creation {
     }
 
     if (!$NoGit) {
+        if (!$DontUpdateGitIgnore) { Update-GitIgnore $UpdateGitIgnoreUrl }
         Write-Output "Initing Git of $solutionDir"
         $gitIgnore = Join-Path $PSScriptRoot "gitignore"
         $gitIgnoreDestination = Join-Path $solutionDir ".gitignore"
@@ -118,16 +135,22 @@ function Invoke-Creation {
 
     code $solutionDir
 }
-$arguments = @{ path = $path
-    solution         = $solution 
-    class            = $class 
-    MakeConsole      = $MakeConsole
-    console          = $console
-    NoGit            = $NoGit
+
+function Main {
+    $arguments = @{ path    = $path
+        solution            = $solution 
+        class               = $class 
+        MakeConsole         = $MakeConsole
+        console             = $console
+        NoGit               = $NoGit
+        DontUpdateGitIgnore = $DontUpdateGitIgnore
+        UpdateGitIgnoreUrl  = $UpdateGitIgnoreUrl
+    }
+    if ($verbose) {
+        Invoke-Creation @arguments
+    }
+    else {
+        Invoke-Creation @arguments | Out-Null
+    }
 }
-if ($verbose) {
-    Invoke-Creation @arguments
-}
-else {
-    Invoke-Creation @arguments | Out-Null
-}
+return Main

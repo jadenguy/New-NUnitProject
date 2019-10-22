@@ -1,13 +1,15 @@
 <#
 .SYNOPSIS
     Stands up basic NUnit tested Class Library project and init the Git
-.DESCRIPTION
+
+    .DESCRIPTION
     Creates a Git repository of a .Net Solution with a Class Library that is refered to by an NUnit Test Class library. Optionally creates a console class.
     See below for project layout format
     https://gist.github.com/davidfowl/ed7564297c61fe9ab814
-.EXAMPLE
-    PS C:\> <example usage>
-    Explanation of what the example does
+
+    .EXAMPLE
+    PS C:\> .\New-NUnitProject\new-project.ps1 -Path ..\dotnet\ -Solution newThing
+    Creates a new Solution in the folder dotnet, with the name newThing. Creates a Common class library, and a test library. Links together the references.
 
 .PARAMETER Path
     The destination path for your solution
@@ -117,11 +119,12 @@ function Invoke-Creation {
     code $solutionDir
 }
 $arguments = @{ path = $path
-    solution = $solution 
-    class = $class 
-    MakeConsole = $MakeConsole
-    console = $console
-    NoGit = $NoGit}
+    solution         = $solution 
+    class            = $class 
+    MakeConsole      = $MakeConsole
+    console          = $console
+    NoGit            = $NoGit
+}
 if ($verbose) {
     Invoke-Creation @arguments
 }
